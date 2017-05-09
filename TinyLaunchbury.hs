@@ -7,10 +7,10 @@ module TinyLaunchbury (
 
 import Data.List(foldl',intercalate)
 import Control.Monad.State
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.Identity
 import Control.Arrow( second, (***) )
-import Data.Monoid
+import Data.Monoid hiding (Alt)
 
 
 type Name = String 
@@ -57,11 +57,11 @@ hRemoveBinding :: Name -> (Heap -> Heap)
 hRemoveBinding x = filter $ (/= x) . fst
 
 
-type StateErrorT s a m = ErrorT String (StateT s m) a
-runStateErrorT = runStateT. runErrorT 
+type StateExceptT s a m = ExceptT String (StateT s m) a
+runStateExceptT = runStateT. runExceptT 
 
-type StateError s a = StateErrorT s a Identity
-runStateError m = runIdentity. runStateErrorT m
+type StateExcept s a = StateExceptT s a Identity
+runStateExcept m = runIdentity. runStateExceptT m
 
 data ReduceState = RS { rsHeap :: Heap
                       , rsFreshVars :: [Name]
@@ -76,9 +76,9 @@ rsInitial = RS { rsHeap = []
                , rsLog = []
                }
 
-type ReduceM a =  StateError ReduceState a
+type ReduceM a =  StateExcept ReduceState a
 rmRun :: ReduceM a -> ReduceState-> (Either String a, ReduceState)
-rmRun = runStateError
+rmRun = runStateExcept
 
 -- hides the implementation detail of fail vs throw error; makes it easier to
 -- swap out the underlying monad.
