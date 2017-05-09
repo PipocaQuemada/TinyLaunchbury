@@ -103,6 +103,7 @@ sub x y e =
                | otherwise = z
      -- subAlt (ctor, (args, e'')) = (ctor, (map subName args, subExpr e''))
      subAlt = second (map subName *** subExpr)
+     subBindings (z,e) = (subName z, subExpr e)
  in case e of
        Lambda z e'| z == x              -> e -- only want to sub free variables;
                                              -- x is no longer free
@@ -111,7 +112,7 @@ sub x y e =
        Var z                            -> Var (subName z)
        Let bs e'  | elem x (binders bs) -> e -- only want to sub free variables;
                                              -- x is no longer free
-                  | otherwise           -> Let bs (subExpr e')
+                  | otherwise           -> Let (map subBindings bs) (subExpr e')
        Prim fun e' e''                  -> Prim fun (subExpr e') (subExpr e'')
                                         -- substitute the variables in the ctor;
                                         -- the ctor itself should be left alone 
